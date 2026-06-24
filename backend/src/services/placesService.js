@@ -39,7 +39,7 @@ const placesService = {
           lat: el.lat,
           lng: el.lon,
           description: description || 'Popular tourist attraction',
-          image: images[0] || `https://source.unsplash.com/400x300/?${encodeURIComponent(name)},travel,india`,
+          image: images[0] || `https://picsum.photos/seed/${encodeURIComponent(name)}/400/300`,
           rating: parseFloat(el.tags.rating) || parseFloat(el.tags['rating:average']) || 4.0,
           timeRequired: this._estimateTime(category),
           entryFee: el.tags.fee === 'yes' ? (el.tags['fee:amount'] || '₹50 - ₹300') : 'Free',
@@ -104,7 +104,7 @@ const placesService = {
         params: {
           action: 'query', list: 'search', srsearch: `${cityName} tourist attractions`, srlimit: 10,
           format: 'json', origin: '*'
-        }, timeout: 8000
+        }, timeout: 8000, headers: { 'User-Agent': 'TravelRouteAI/1.0' }
       });
       const results = [];
       for (const page of (pageData?.query?.search || [])) {
@@ -114,7 +114,7 @@ const placesService = {
           params: {
             action: 'query', titles: title, prop: 'pageimages|extracts',
             pithumbsize: 400, exintro: true, explaintext: true, format: 'json', origin: '*'
-          }, timeout: 5000
+          }, timeout: 5000, headers: { 'User-Agent': 'TravelRouteAI/1.0' }
         });
         const pages = Object.values(imgData?.query?.pages || {});
         const p = pages.find(p => p && p.pageid);
@@ -124,7 +124,7 @@ const placesService = {
             name: p.title,
             lat: 0, lng: 0,
             description: (p.extract || 'Popular tourist attraction').slice(0, 300),
-            image: p.thumbnail?.source || `https://source.unsplash.com/400x300/?${encodeURIComponent(p.title)},india`,
+            image: p.thumbnail?.source || `https://picsum.photos/seed/${encodeURIComponent(p.title)}/400/300`,
             rating: 4.0,
             category: 'attraction',
             timeRequired: '1-2 hours',
@@ -139,7 +139,7 @@ const placesService = {
 
   async _getPlaceImages(name, cityName = '') {
     try {
-      const { data } = await axios.get('https://en.wikipedia.org/api/rest_v1/page/summary/' + encodeURIComponent(name), { timeout: 5000 });
+      const { data } = await axios.get('https://en.wikipedia.org/api/rest_v1/page/summary/' + encodeURIComponent(name), { timeout: 5000, headers: { 'User-Agent': 'TravelRouteAI/1.0' } });
       if (data && data.thumbnail && data.thumbnail.source) {
         return [data.thumbnail.source];
       }
@@ -149,7 +149,7 @@ const placesService = {
       const searchRes = await axios.get('https://en.wikipedia.org/w/api.php', {
         params: {
           action: 'query', list: 'search', srsearch: searchTerms, format: 'json', srlimit: 3, origin: '*'
-        }, timeout: 5000
+        }, timeout: 5000, headers: { 'User-Agent': 'TravelRouteAI/1.0' }
       });
       const pages = searchRes?.data?.query?.search || [];
       for (const page of pages) {
@@ -157,7 +157,7 @@ const placesService = {
           const imgRes = await axios.get('https://en.wikipedia.org/w/api.php', {
             params: {
               action: 'query', titles: page.title, prop: 'pageimages', pithumbsize: 400, format: 'json', origin: '*'
-            }, timeout: 5000
+            }, timeout: 5000, headers: { 'User-Agent': 'TravelRouteAI/1.0' }
           });
           const imgPages = imgRes?.data?.query?.pages;
           if (imgPages) {

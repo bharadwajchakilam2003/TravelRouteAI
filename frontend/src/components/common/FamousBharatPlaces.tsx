@@ -149,12 +149,12 @@ export default function FamousBharatPlaces() {
                 >
                   <div className="relative h-48 overflow-hidden">
                     <img
-                      src={place.image || `https://source.unsplash.com/600x400/?${encodeURIComponent(place.title)},india`}
+                      src={place.image || `https://picsum.photos/seed/${encodeURIComponent(place.title)}/600/400`}
                       alt={place.title}
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                       loading="lazy"
                       onError={e => {
-                        (e.target as HTMLImageElement).src = `https://source.unsplash.com/600x400/?${encodeURIComponent(place.category)},india`;
+                        (e.target as HTMLImageElement).src = `https://picsum.photos/seed/${encodeURIComponent(place.category)}/600/400`;
                       }}
                     />
                     <div className="absolute bottom-3 left-3 px-2 py-1 bg-black/50 backdrop-blur-sm rounded-lg text-xs text-white capitalize">
@@ -204,11 +204,11 @@ export default function FamousBharatPlaces() {
 
               <div className="relative h-64 sm:h-80 overflow-hidden">
                 <img
-                  src={selected.image || `https://source.unsplash.com/800x400/?${encodeURIComponent(selected.title)},india`}
+                  src={selected.image || `https://picsum.photos/seed/${encodeURIComponent(selected.title)}/800/400`}
                   alt={selected.title}
                   className="w-full h-full object-cover"
                   onError={e => {
-                    (e.target as HTMLImageElement).src = `https://source.unsplash.com/800x400/?${encodeURIComponent(selected.category)},india`;
+                    (e.target as HTMLImageElement).src = `https://picsum.photos/seed/${encodeURIComponent(selected.category)}/800/400`;
                   }}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>

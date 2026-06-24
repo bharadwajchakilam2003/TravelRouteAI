@@ -129,7 +129,7 @@ const mapsService = {
   async getPlacePhoto(photoReference, maxWidth = 400) {
     if (!photoReference) return '';
     try {
-      const { data } = await axios.get(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(photoReference)}`, { timeout: 5000 });
+      const { data } = await axios.get(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(photoReference)}`, { timeout: 5000, headers: { 'User-Agent': 'TravelRouteAI/1.0' } });
       if (data && data.thumbnail && data.thumbnail.source) {
         return data.thumbnail.source;
       }

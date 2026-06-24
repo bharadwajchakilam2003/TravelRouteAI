@@ -190,7 +190,7 @@ function getFallbackImages(city: string): PhotoInfo[] {
     `${city} landmark`,
   ];
   return queries.map((q, i) => ({
-    url: `https://source.unsplash.com/600x400/?${encodeURIComponent(q)},india`,
+    url: `https://picsum.photos/seed/${encodeURIComponent(q)}/600/400`,
     title: `${city} ${['Cityscape', 'Travel View', 'Landmark'][i] || 'Photo'}`
   }));
 }

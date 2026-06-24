@@ -38,7 +38,7 @@ function AttractionCard({ attraction, index }: { attraction: Attraction; index: 
       <div className="relative h-48 overflow-hidden">
         {!imgError ? (
           <img
-            src={attraction.image || `https://source.unsplash.com/400x300/?${encodeURIComponent(attraction.name)},tourist`}
+            src={attraction.image || `https://picsum.photos/seed/${encodeURIComponent(attraction.name)}/400/300`}
             alt={attraction.name}
             className="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
             onError={() => setImgError(true)}
@@ -103,9 +103,9 @@ export default function AttractionsList({ attractions, destinationCity, destLat,
           if (url && (url.endsWith('.jpg') || url.endsWith('.jpeg') || url.endsWith('.png'))) urls.push(url);
         }
         setDestPhotos(urls.length > 0 ? urls : [
-          `https://source.unsplash.com/600x400/?${encodeURIComponent(destinationCity)},city,india`,
-          `https://source.unsplash.com/600x400/?${encodeURIComponent(destinationCity)},travel,india`,
-          `https://source.unsplash.com/600x400/?${encodeURIComponent(destinationCity)},landmark,india`,
+          `https://picsum.photos/seed/${encodeURIComponent(destinationCity)}1/600/400`,
+          `https://picsum.photos/seed/${encodeURIComponent(destinationCity)}2/600/400`,
+          `https://picsum.photos/seed/${encodeURIComponent(destinationCity)}3/600/400`,
         ]);
       } catch { setDestPhotos([]); }
     };

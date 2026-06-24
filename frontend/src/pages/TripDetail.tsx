@@ -83,7 +83,7 @@ export default function TripDetail() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {trip.attractions.slice(0, 6).map((attraction: any, i: number) => (
                 <div key={i} className="flex gap-4 p-3 rounded-xl hover:bg-gray-50 transition-colors">
-                  <img src={attraction.image || 'https://source.unsplash.com/100x100/?travel'} alt={attraction.name} className="w-20 h-20 rounded-lg object-cover flex-shrink-0" />
+                  <img src={attraction.image || `https://picsum.photos/seed/${encodeURIComponent(attraction.name)}/100/100`} alt={attraction.name} className="w-20 h-20 rounded-lg object-cover flex-shrink-0" />
                   <div>
                     <h3 className="font-semibold text-gray-800">{attraction.name}</h3>
                     <p className="text-xs text-gray-500 mt-1">{attraction.description?.slice(0, 100)}</p>

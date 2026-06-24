@@ -94,7 +94,7 @@ const service = {
       title: place.name,
       pageTitle: place.name,
       description: `${place.name} is a famous ${place.category} in India. Learn more about its history and significance.`,
-      image: `https://source.unsplash.com/600x400/?${encodeURIComponent(place.name)},india,travel`,
+      image: `https://picsum.photos/seed/${encodeURIComponent(place.name)}/600/400`,
       url: `https://en.wikipedia.org/wiki/${encodeURIComponent(place.name)}`,
       lat: null, lng: null,
       extract: '',
