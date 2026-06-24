@@ -81,15 +81,15 @@ export default function TripDetail() {
           <div className="glass-card p-6 mb-6">
             <h2 className="section-title">🏛️ Attractions</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {trip.attractions.slice(0, 6).map((attraction: any, i: number) => (
+              {(trip.attractions || []).filter(Boolean).slice(0, 6).map((attraction: any, i: number) => (
                 <div key={i} className="flex gap-4 p-3 rounded-xl hover:bg-gray-50 transition-colors">
-                  <img src={attraction.image || `https://picsum.photos/seed/${encodeURIComponent(attraction.name)}/100/100`} alt={attraction.name} className="w-20 h-20 rounded-lg object-cover flex-shrink-0" />
+                  <img src={attraction?.image || `https://picsum.photos/seed/${encodeURIComponent(attraction?.name || 'unknown')}/100/100`} alt={attraction?.name || ''} className="w-20 h-20 rounded-lg object-cover flex-shrink-0" />
                   <div>
-                    <h3 className="font-semibold text-gray-800">{attraction.name}</h3>
-                    <p className="text-xs text-gray-500 mt-1">{attraction.description?.slice(0, 100)}</p>
+                    <h3 className="font-semibold text-gray-800">{attraction?.name}</h3>
+                    <p className="text-xs text-gray-500 mt-1">{attraction?.description?.slice(0, 100)}</p>
                     <div className="flex gap-2 mt-2 text-xs text-gray-400">
-                      <span>⭐ {attraction.rating || 'N/A'}</span>
-                      <span>💰 {attraction.entryFee || 'N/A'}</span>
+                      <span>⭐ {attraction?.rating || 'N/A'}</span>
+                      <span>💰 {attraction?.entryFee || 'N/A'}</span>
                     </div>
                   </div>
                 </div>
@@ -101,11 +101,11 @@ export default function TripDetail() {
           <div className="glass-card p-6 mb-6">
             <h2 className="section-title">🌤️ Weather Forecast</h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {trip.weather.slice(0, 4).map((w: any, i: number) => (
+              {(trip.weather || []).filter(Boolean).slice(0, 4).map((w: any, i: number) => (
                 <div key={i} className="bg-gray-50 rounded-xl p-4 text-center">
-                  <div className="text-sm font-medium text-gray-700">{w.city}</div>
-                  <div className="text-2xl font-bold text-gray-800 my-1">{w.temperature}°C</div>
-                  <div className="text-xs text-gray-500">{w.condition}</div>
+                  <div className="text-sm font-medium text-gray-700">{w?.city || ''}</div>
+                  <div className="text-2xl font-bold text-gray-800 my-1">{w?.temperature ?? ''}°C</div>
+                  <div className="text-xs text-gray-500">{w?.condition || ''}</div>
                 </div>
               ))}
             </div>
@@ -124,11 +124,11 @@ export default function TripDetail() {
                   </tr>
                 </thead>
                 <tbody>
-                  {trip.costEstimate.summary.options?.map((opt: any, i: number) => (
+                  {(trip.costEstimate.summary.options || []).filter(Boolean).map((opt: any, i: number) => (
                     <tr key={i} className="border-b border-gray-50">
-                      <td className="py-3 capitalize">{opt.mode}</td>
-                      <td className="py-3 text-right font-semibold">{formatCurrency(opt.cost)}</td>
-                      <td className="py-3 text-right text-gray-500">{opt.time}h</td>
+                      <td className="py-3 capitalize">{opt?.mode || ''}</td>
+                      <td className="py-3 text-right font-semibold">{formatCurrency(opt?.cost)}</td>
+                      <td className="py-3 text-right text-gray-500">{opt?.time ?? ''}h</td>
                     </tr>
                   ))}
                 </tbody>

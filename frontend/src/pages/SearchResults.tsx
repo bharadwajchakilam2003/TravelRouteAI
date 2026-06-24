@@ -167,8 +167,8 @@ export default function SearchResults() {
             <h1 className="text-xl md:text-2xl font-bold text-gray-800 dark:text-white truncate max-w-[40%]">{destination}</h1>
           </div>
           <div className="flex flex-wrap gap-4 text-sm text-gray-500 dark:text-gray-400">
-            <span className="flex items-center gap-1">📏 {formatDistance(results.route.distance)}</span>
-            <span className="flex items-center gap-1">⏱️ {formatDuration(results.route.duration)}</span>
+            <span className="flex items-center gap-1">📏 {formatDistance(results.route?.distance)}</span>
+            <span className="flex items-center gap-1">⏱️ {formatDuration(results.route?.duration)}</span>
             <span className="relative">
               <select
                 value={travelers}
@@ -185,14 +185,14 @@ export default function SearchResults() {
             <button
               onClick={() => downloadTripReport({
                 source, destination,
-                distance: results.route.distance,
-                duration: results.route.duration,
+                distance: results.route?.distance || 0,
+                duration: results.route?.duration || 0,
                 travelDate: travelDate || undefined,
                 returnDate: returnDate || undefined,
                 travelers,
-                weather: results.weather,
-                costEstimates: results.costEstimates,
-                citiesOnRoute: results.citiesOnRoute,
+                weather: results.weather || [],
+                costEstimates: results.costEstimates || {},
+                citiesOnRoute: results.citiesOnRoute || [],
               })}
               className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors shadow-sm"
             >

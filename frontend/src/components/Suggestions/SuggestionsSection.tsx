@@ -59,13 +59,13 @@ export default function SuggestionsSection({ destination, attractions, source }:
   const climate = climateGuide[zone] || climateGuide['north'];
   const ideas = tripIdeas[destination.name.toLowerCase().trim()] || [];
 
-  const destAttractions = attractions.filter(a => {
-    const cityMatch = a.city?.toLowerCase() === destination.name.toLowerCase();
-    const nameMatch = a.name?.toLowerCase().includes(destination.name.toLowerCase());
+  const destAttractions = (attractions || []).filter(Boolean).filter(a => {
+    const cityMatch = (a as any).city?.toLowerCase() === destination.name.toLowerCase();
+    const nameMatch = (a as any).name?.toLowerCase().includes(destination.name.toLowerCase());
     return cityMatch || nameMatch;
   }).slice(0, 6);
 
-  const allAttractions = attractions.slice(0, 7);
+  const allAttractions = (attractions || []).slice(0, 7);
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">

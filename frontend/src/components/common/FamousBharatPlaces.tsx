@@ -38,17 +38,17 @@ export default function FamousBharatPlaces() {
     fetchPlaces();
   }, []);
 
-  const categories = ['all', ...new Set(places.map(p => p.category))];
+  const categories = ['all', ...new Set((places || []).filter(Boolean).map(p => p.category))];
 
-  const filtered = places.filter(p => {
+  const filtered = (places || []).filter(Boolean).filter(p => {
     const matchFilter = filter === 'all' || p.category === filter;
     const q = search.toLowerCase();
     const matchSearch = !search ||
-      p.title.toLowerCase().includes(q) ||
-      p.description.toLowerCase().includes(q) ||
+      (p.title || '').toLowerCase().includes(q) ||
+      (p.description || '').toLowerCase().includes(q) ||
       (p.city && p.city.toLowerCase().includes(q)) ||
       (p.state && p.state.toLowerCase().includes(q)) ||
-      p.tags.some(t => t.toLowerCase().includes(q));
+      (p.tags || []).some(t => (t || '').toLowerCase().includes(q));
     return matchFilter && matchSearch;
   });
 
