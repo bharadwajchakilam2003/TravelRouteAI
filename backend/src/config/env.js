@@ -12,8 +12,6 @@ module.exports = {
   googleClientId: process.env.GOOGLE_CLIENT_ID,
   googleClientSecret: process.env.GOOGLE_CLIENT_SECRET,
   openrouteApiKey: process.env.OPENROUTE_API_KEY,
-  amadeusClientId: process.env.AMADEUS_CLIENT_ID,
-  amadeusClientSecret: process.env.AMADEUS_CLIENT_SECRET,
   geminiApiKey: process.env.GEMINI_API_KEY,
   aviationstackKey: process.env.AVIATIONSTACK_API_KEY,
   opentripmapKey: process.env.OPENTRIPMAP_API_KEY,

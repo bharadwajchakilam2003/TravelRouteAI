@@ -94,38 +94,6 @@ const costService = {
     const cacheKey = `flights_${sourceCode}_${destCode}_${date}`;
     const cached = cache.get(cacheKey);
     if (cached) return cached;
-    try {
-      if (config.amadeusClientId && config.amadeusClientSecret &&
-          config.amadeusClientId !== 'your_amadeus_client_id') {
-        const authRes = await axios.post('https://test.api.amadeus.com/v1/security/oauth2/token',
-          `grant_type=client_credentials&client_id=${config.amadeusClientId}&client_secret=${config.amadeusClientSecret}`,
-          { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
-        );
-        const token = authRes.data.access_token;
-        const flightRes = await axios.get('https://test.api.amadeus.com/v2/shopping/flight-offers', {
-          params: { originLocationCode: sourceCode, destinationLocationCode: destCode, departureDate: date, adults: 1, max: 5 },
-          headers: { Authorization: `Bearer ${token}` },
-          timeout: 10000
-        });
-        if (flightRes.data.data && flightRes.data.data.length > 0) {
-          const apiFlights = flightRes.data.data.map(f => ({
-            airline: f.validatingAirlineCodes?.[0] || 'Unknown',
-            flightNumber: f.itineraries?.[0]?.segments?.[0]?.carrierCode + '-' + f.itineraries?.[0]?.segments?.[0]?.number || 'N/A',
-            departureTime: f.itineraries?.[0]?.segments?.[0]?.departure?.at?.slice(11, 16) || '00:00',
-            arrivalTime: f.itineraries?.[0]?.segments?.[0]?.arrival?.at?.slice(11, 16) || '00:00',
-            duration: f.itineraries?.[0]?.duration?.replace('PT', '').replace('H', 'h ').replace('M', 'm') || 'N/A',
-            price: Math.round(parseFloat(f.price?.grandTotal || '0') * 80),
-            cabinClass: f.travelerPricings?.[0]?.fareDetailsBySegment?.[0]?.cabin || 'Economy',
-            stops: (f.itineraries?.[0]?.segments?.length || 1) - 1
-          }));
-          const result = { flights: apiFlights };
-          cache.set(cacheKey, result);
-          return result;
-        }
-      }
-    } catch (error) {
-      console.error('Amadeus API error:', error.message);
-    }
     let flights = [];
     try {
       if (config.aviationstackKey && config.aviationstackKey !== 'your_aviationstack_key') {
