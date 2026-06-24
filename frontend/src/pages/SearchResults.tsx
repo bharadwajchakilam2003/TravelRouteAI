@@ -57,7 +57,6 @@ export default function SearchResults() {
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('photos');
   const [retryCount, setRetryCount] = useState(0);
-  const [timedOut, setTimedOut] = useState(false);
 
   const source = searchParams.get('source') || '';
   const destination = searchParams.get('destination') || '';
@@ -70,11 +69,8 @@ export default function SearchResults() {
     setLoading(true);
     setError(null);
     setResults(null);
-    setTimedOut(false);
-    const timeoutId = setTimeout(() => setTimedOut(true), 6000);
     try {
       const data = await searchAPI.search({ source, destination, travelDate: travelDate || undefined, returnDate: returnDate || undefined, travelers });
-      clearTimeout(timeoutId);
       if (data.success) {
         setResults(data);
         try {
@@ -87,10 +83,8 @@ export default function SearchResults() {
         setError(data.message || 'No results found');
       }
     } catch (err: any) {
-      clearTimeout(timeoutId);
       setError(err.response?.data?.message || 'Failed to fetch search results. Please try again.');
     } finally {
-      clearTimeout(timeoutId);
       setLoading(false);
     }
   };
@@ -104,29 +98,16 @@ export default function SearchResults() {
 
   const tabs = useMemo(() => ['photos', 'suggestions', 'travel-options', 'weather', 'costs', 'hotels', 'restaurants', 'map', 'ai-assistant'], []);
 
-  if (loading && !results) return (
-    <>
-      {timedOut && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50">
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-amber-50 dark:bg-amber-900/80 border border-amber-200 dark:border-amber-700 text-amber-800 dark:text-amber-200 px-6 py-3 rounded-xl shadow-xl flex items-center gap-3"
-          >
-            <span>⏳</span>
-            <span className="text-sm font-medium">Taking longer than expected. You can wait or retry.</span>
-            <button
-              onClick={() => setRetryCount(c => c + 1)}
-              className="ml-2 px-3 py-1 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-lg transition-colors"
-            >
-              Retry
-            </button>
-          </motion.div>
-        </div>
-      )}
-      <LoadingSkeleton />
-    </>
-  );
+  if (!source || !destination) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 py-20 text-center">
+        <div className="text-6xl mb-4">🗺️</div>
+        <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-3">No search parameters</h2>
+        <p className="text-gray-500 mb-6">Please enter a source and destination to search.</p>
+        <a href="/" className="btn-primary inline-flex items-center gap-2 px-6 py-3 rounded-xl">Go Home</a>
+      </div>
+    );
+  }
 
   if (error) {
     return (
@@ -170,8 +151,6 @@ export default function SearchResults() {
     );
   }
 
-  if (!results) return null;
-
   return (
     <div className="container-wide py-6">
       <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="glass-card p-4 md:p-6 mb-6">
@@ -182,8 +161,8 @@ export default function SearchResults() {
             <h1 className="text-xl md:text-2xl font-bold text-gray-800 dark:text-white truncate max-w-[40%]">{destination}</h1>
           </div>
           <div className="flex flex-wrap gap-4 text-sm text-gray-500 dark:text-gray-400">
-            <span className="flex items-center gap-1">📏 {formatDistance(results.route?.distance)}</span>
-            <span className="flex items-center gap-1">⏱️ {formatDuration(results.route?.duration)}</span>
+            {results?.route?.distance && <span className="flex items-center gap-1">📏 {formatDistance(results.route.distance)}</span>}
+            {results?.route?.duration && <span className="flex items-center gap-1">⏱️ {formatDuration(results.route.duration)}</span>}
             <span className="relative">
               <select
                 value={travelers}
@@ -197,23 +176,25 @@ export default function SearchResults() {
               <span className="absolute left-2 top-1/2 -translate-y-1/2 text-sm pointer-events-none">👥</span>
             </span>
             {travelDate && <span className="flex items-center gap-1">📅 {travelDate}</span>}
-            <button
-              onClick={() => downloadTripReport({
-                source, destination,
-                distance: results.route?.distance || 0,
-                duration: results.route?.duration || 0,
-                travelDate: travelDate || undefined,
-                returnDate: returnDate || undefined,
-                travelers,
-                weather: results.weather || [],
-                costEstimates: results.costEstimates || {},
-                citiesOnRoute: results.citiesOnRoute || [],
-              })}
-              className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors shadow-sm"
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-              Download Report
-            </button>
+            {results && (
+              <button
+                onClick={() => downloadTripReport({
+                  source, destination,
+                  distance: results.route?.distance || 0,
+                  duration: results.route?.duration || 0,
+                  travelDate: travelDate || undefined,
+                  returnDate: returnDate || undefined,
+                  travelers,
+                  weather: results.weather || [],
+                  costEstimates: results.costEstimates || {},
+                  citiesOnRoute: results.citiesOnRoute || [],
+                })}
+                className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors shadow-sm"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                Download Report
+              </button>
+            )}
           </div>
         </div>
       </motion.div>
@@ -234,67 +215,71 @@ export default function SearchResults() {
         ))}
       </div>
 
-      <Suspense fallback={<TabFallback />}>
-        <motion.div key={activeTab} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.15 }}>
-          {activeTab === 'photos' && results.destination && (
-            <DestinationGallery city={destination} lat={results.destination.lat} lng={results.destination.lng} />
-          )}
-          {activeTab === 'suggestions' && <SuggestionsSection destination={results.destination} attractions={results.attractions || []} />}
-          {activeTab === 'travel-options' && results.costEstimates && <TravelOptions costEstimates={results.costEstimates} travelers={travelers} />}
-          {activeTab === 'weather' && (
-            destinationWeather.length > 0 ? (
-              <div>
-                <WeatherSection weather={destinationWeather} />
-                {destinationWeather.map((w, i) => w?.forecast && w.forecast.length >= 2 && (
-                  <TemperatureTrend key={i} forecast={w.forecast} city={w.city || destination} />
-                ))}
+      {loading || !results ? (
+        <TabFallback />
+      ) : (
+        <Suspense fallback={<TabFallback />}>
+          <motion.div key={activeTab} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.15 }}>
+            {activeTab === 'photos' && results.destination && (
+              <DestinationGallery city={destination} lat={results.destination.lat} lng={results.destination.lng} />
+            )}
+            {activeTab === 'suggestions' && <SuggestionsSection destination={results.destination} attractions={results.attractions || []} />}
+            {activeTab === 'travel-options' && results.costEstimates && <TravelOptions costEstimates={results.costEstimates} travelers={travelers} />}
+            {activeTab === 'weather' && (
+              destinationWeather.length > 0 ? (
+                <div>
+                  <WeatherSection weather={destinationWeather} />
+                  {destinationWeather.map((w, i) => w?.forecast && w.forecast.length >= 2 && (
+                    <TemperatureTrend key={i} forecast={w.forecast} city={w.city || destination} />
+                  ))}
+                </div>
+              ) : (
+                <div className="glass-card p-12 text-center">
+                  <div className="text-6xl mb-4">🌤️</div>
+                  <h3 className="text-xl font-semibold text-gray-800 dark:text-white mb-2">No weather data available</h3>
+                  <p className="text-gray-400 dark:text-gray-500">Weather forecast could not be loaded for this route.</p>
+                </div>
+              )
+            )}
+            {activeTab === 'costs' && results.costEstimates && (
+              <div className="space-y-6">
+                {results.costEstimates.summary && (
+                  <>
+                    <CostComparisonCard summary={results.costEstimates.summary} travelers={travelers} />
+                    <CostComparisonChart options={results.costEstimates.summary.options || []} travelers={travelers} />
+                  </>
+                )}
+                {results.costEstimates.budget && (
+                  <>
+                    <BudgetEstimator budget={results.costEstimates.budget} />
+                    {results.costEstimates.budget.economy && results.costEstimates.budget.midRange && results.costEstimates.budget.luxury && (
+                      <BudgetBreakdownChart
+                        economy={results.costEstimates.budget.economy}
+                        midRange={results.costEstimates.budget.midRange}
+                        luxury={results.costEstimates.budget.luxury}
+                      />
+                    )}
+                  </>
+                )}
+                <CostEstimator costEstimates={results.costEstimates} travelers={travelers} />
               </div>
-            ) : (
-              <div className="glass-card p-12 text-center">
-                <div className="text-6xl mb-4">🌤️</div>
-                <h3 className="text-xl font-semibold text-gray-800 dark:text-white mb-2">No weather data available</h3>
-                <p className="text-gray-400 dark:text-gray-500">Weather forecast could not be loaded for this route.</p>
-              </div>
-            )
-          )}
-          {activeTab === 'costs' && results.costEstimates && (
-            <div className="space-y-6">
-              {results.costEstimates.summary && (
-                <>
-                  <CostComparisonCard summary={results.costEstimates.summary} travelers={travelers} />
-                  <CostComparisonChart options={results.costEstimates.summary.options || []} travelers={travelers} />
-                </>
-              )}
-              {results.costEstimates.budget && (
-                <>
-                  <BudgetEstimator budget={results.costEstimates.budget} />
-                  {results.costEstimates.budget.economy && results.costEstimates.budget.midRange && results.costEstimates.budget.luxury && (
-                    <BudgetBreakdownChart
-                      economy={results.costEstimates.budget.economy}
-                      midRange={results.costEstimates.budget.midRange}
-                      luxury={results.costEstimates.budget.luxury}
-                    />
-                  )}
-                </>
-              )}
-              <CostEstimator costEstimates={results.costEstimates} travelers={travelers} />
-            </div>
-          )}
-          {activeTab === 'hotels' && results.citiesOnRoute && <HotelsSection cities={results.citiesOnRoute} />}
-          {activeTab === 'restaurants' && results.citiesOnRoute && <RestaurantsSection cities={results.citiesOnRoute} />}
-          {activeTab === 'map' && results.source && results.destination && (
-            <RouteMap
-              source={results.source}
-              destination={results.destination}
-              attractions={results.attractions || []}
-              polyline={results.route?.polyline}
-            />
-          )}
-          {activeTab === 'ai-assistant' && source && destination && (
-            <AIChat context={{ source, destination, distance: results.route?.distance || 0 }} />
-          )}
-        </motion.div>
-      </Suspense>
+            )}
+            {activeTab === 'hotels' && results.citiesOnRoute && <HotelsSection cities={results.citiesOnRoute} />}
+            {activeTab === 'restaurants' && results.citiesOnRoute && <RestaurantsSection cities={results.citiesOnRoute} />}
+            {activeTab === 'map' && results.source && results.destination && (
+              <RouteMap
+                source={results.source}
+                destination={results.destination}
+                attractions={results.attractions || []}
+                polyline={results.route?.polyline}
+              />
+            )}
+            {activeTab === 'ai-assistant' && source && destination && (
+              <AIChat context={{ source, destination, distance: results.route?.distance || 0 }} />
+            )}
+          </motion.div>
+        </Suspense>
+      )}
     </div>
   );
 }
