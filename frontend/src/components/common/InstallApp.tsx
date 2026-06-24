@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import toast from 'react-hot-toast';
 import { usePWAInstall } from '../../hooks/usePWAInstall';
 
 export default function InstallApp({ isMobile = false }: { isMobile?: boolean }) {
-  const { canShowInstall, install, isIOS } = usePWAInstall();
+  const { canShowInstall, install, isIOS, isPromptReady } = usePWAInstall();
   const [showModal, setShowModal] = useState(false);
 
   if (!canShowInstall) return null;
@@ -11,8 +12,13 @@ export default function InstallApp({ isMobile = false }: { isMobile?: boolean })
   const handleClick = () => {
     if (isIOS) {
       setShowModal(true);
-    } else {
+    } else if (isPromptReady) {
       install();
+    } else {
+      toast('Install option will appear shortly — keep exploring!', {
+        icon: '📲',
+        duration: 3000,
+      });
     }
   };
 

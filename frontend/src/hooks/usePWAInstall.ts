@@ -45,11 +45,14 @@ export function usePWAInstall() {
     }
   }, [deferredPrompt]);
 
+  const supportsPWA = 'onbeforeinstallprompt' in window || isIOS;
+
   return {
     isInstalled,
-    isSupported: !!deferredPrompt || isIOS,
+    isSupported: supportsPWA,
     isIOS,
     install,
-    canShowInstall: !isInstalled && (!!deferredPrompt || isIOS),
+    isPromptReady: !!deferredPrompt,
+    canShowInstall: !isInstalled && supportsPWA,
   };
 }
