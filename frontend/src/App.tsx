@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Navbar from './components/common/Navbar';
 import Footer from './components/common/Footer';
@@ -18,7 +19,23 @@ import Contact from './pages/Contact';
 import Blog from './pages/Blog';
 import BlogPost from './pages/BlogPost';
 
+const KEEP_WARM_INTERVAL = 4 * 60 * 1000;
+
+function keepWarm() {
+  try {
+    const last = parseInt(localStorage.getItem('keep_warm_ping') || '0');
+    if (Date.now() - last < KEEP_WARM_INTERVAL) return;
+    localStorage.setItem('keep_warm_ping', String(Date.now()));
+    fetch('/api/health', { method: 'GET', cache: 'no-store' }).catch(() => {});
+  } catch {}
+}
+
 function App() {
+  useEffect(() => {
+    keepWarm();
+    const id = setInterval(keepWarm, KEEP_WARM_INTERVAL);
+    return () => clearInterval(id);
+  }, []);
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
