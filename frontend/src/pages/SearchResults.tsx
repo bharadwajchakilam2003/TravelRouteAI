@@ -50,10 +50,24 @@ function TabFallback() {
   );
 }
 
+function cacheKey(source: string, destination: string, travelers: number) {
+  return `search_${source.toLowerCase()}_${destination.toLowerCase()}_${travelers}`;
+}
+
 export default function SearchResults() {
   const [searchParams] = useSearchParams();
-  const [results, setResults] = useState<SearchResultsData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [results, setResults] = useState<SearchResultsData | null>(() => {
+    const source = searchParams.get('source') || '';
+    const destination = searchParams.get('destination') || '';
+    const travelers = parseInt(localStorage.getItem('travelers') || searchParams.get('travelers') || '1');
+    const key = cacheKey(source, destination, travelers);
+    try {
+      const cached = sessionStorage.getItem(key);
+      if (cached) return JSON.parse(cached);
+    } catch {}
+    return null;
+  });
+  const [loading, setLoading] = useState(!results);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('photos');
   const [retryCount, setRetryCount] = useState(0);
@@ -64,15 +78,17 @@ export default function SearchResults() {
   const returnDate = searchParams.get('returnDate') || '';
   const [travelers, setTravelers] = useState(() => parseInt(localStorage.getItem('travelers') || searchParams.get('travelers') || '1'));
 
-  const doSearch = async () => {
+  const doSearch = async (background = false) => {
     if (!source || !destination) return;
-    setLoading(true);
+    if (!background) setLoading(true);
     setError(null);
-    setResults(null);
     try {
       const data = await searchAPI.search({ source, destination, travelDate: travelDate || undefined, returnDate: returnDate || undefined, travelers });
       if (data.success) {
         setResults(data);
+        try {
+          sessionStorage.setItem(cacheKey(source, destination, travelers), JSON.stringify(data));
+        } catch {}
         try {
           const stored = JSON.parse(localStorage.getItem('travel_history') || '[]');
           const filtered = stored.filter((s: any) => !(s.source.toLowerCase() === source.toLowerCase() && s.destination.toLowerCase() === destination.toLowerCase()));
@@ -83,13 +99,19 @@ export default function SearchResults() {
         setError(data.message || 'No results found');
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to fetch search results. Please try again.');
+      if (!background) setError(err.response?.data?.message || 'Failed to fetch search results. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => { doSearch(); }, [retryCount]);
+  useEffect(() => {
+    if (results) {
+      doSearch(true);
+    } else {
+      doSearch();
+    }
+  }, [retryCount]);
 
   const destinationWeather = useMemo(() =>
     (results?.weather || []).filter(w => w.city?.toLowerCase() === destination.toLowerCase()),
