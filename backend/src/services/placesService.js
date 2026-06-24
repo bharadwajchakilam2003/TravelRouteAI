@@ -25,7 +25,7 @@ const placesService = {
       const overpassQuery = `[out:json];(\n${queries}\n);out body ${Math.min(radius / 1000 * 2, 50)};out;`;
       const { data } = await axios.post('https://overpass-api.de/api/interpreter',
         `data=${encodeURIComponent(overpassQuery)}`,
-        { headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, timeout: 30000 }
+        { headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, timeout: 8000 }
       );
       const elements = (data.elements || []).filter(e => e.tags && e.tags.name).slice(0, 30);
       enriched = await Promise.all(elements.map(async (el) => {
@@ -102,9 +102,9 @@ const placesService = {
     try {
       const { data: pageData } = await axios.get('https://en.wikipedia.org/w/api.php', {
         params: {
-          action: 'query', list: 'search', srsearch: `${cityName} tourist attractions`, srlimit: 10,
+          action: 'query', list: 'search', srsearch: `${cityName} tourist attractions`, srlimit: 6,
           format: 'json', origin: '*'
-        }, timeout: 8000, headers: { 'User-Agent': 'TravelRouteAI/1.0' }
+        }, timeout: 4000, headers: { 'User-Agent': 'TravelRouteAI/1.0' }
       });
       const results = [];
       for (const page of (pageData?.query?.search || [])) {
@@ -112,9 +112,9 @@ const placesService = {
         if (!title || title.includes('List of') || title.includes('Wikimedia')) continue;
         const { data: imgData } = await axios.get('https://en.wikipedia.org/w/api.php', {
           params: {
-            action: 'query', titles: title, prop: 'pageimages|extracts',
-            pithumbsize: 400, exintro: true, explaintext: true, format: 'json', origin: '*'
-          }, timeout: 5000, headers: { 'User-Agent': 'TravelRouteAI/1.0' }
+            action: 'query', titles: title, prop: 'extracts',
+            exintro: true, explaintext: true, format: 'json', origin: '*'
+          }, timeout: 3000, headers: { 'User-Agent': 'TravelRouteAI/1.0' }
         });
         const pages = Object.values(imgData?.query?.pages || {});
         const p = pages.find(p => p && p.pageid);
@@ -124,7 +124,7 @@ const placesService = {
             name: p.title,
             lat: 0, lng: 0,
             description: (p.extract || 'Popular tourist attraction').slice(0, 300),
-            image: p.thumbnail?.source || `https://picsum.photos/seed/${encodeURIComponent(p.title)}/400/300`,
+            image: `https://picsum.photos/seed/${encodeURIComponent(p.title)}/400/300`,
             rating: 4.0,
             category: 'attraction',
             timeRequired: '1-2 hours',
@@ -133,41 +133,12 @@ const placesService = {
           });
         }
       }
-      return results.slice(0, 8);
+      return results.slice(0, 6);
     } catch (e) { console.error('Famous attractions fetch error:', e.message); return []; }
   },
 
   async _getPlaceImages(name, cityName = '') {
-    try {
-      const { data } = await axios.get('https://en.wikipedia.org/api/rest_v1/page/summary/' + encodeURIComponent(name), { timeout: 5000, headers: { 'User-Agent': 'TravelRouteAI/1.0' } });
-      if (data && data.thumbnail && data.thumbnail.source) {
-        return [data.thumbnail.source];
-      }
-      } catch (e) { console.error('Wiki page image error:', e.message); }
-    try {
-      const searchTerms = cityName ? `${name} ${cityName}` : name;
-      const searchRes = await axios.get('https://en.wikipedia.org/w/api.php', {
-        params: {
-          action: 'query', list: 'search', srsearch: searchTerms, format: 'json', srlimit: 3, origin: '*'
-        }, timeout: 5000, headers: { 'User-Agent': 'TravelRouteAI/1.0' }
-      });
-      const pages = searchRes?.data?.query?.search || [];
-      for (const page of pages) {
-        if (page.title) {
-          const imgRes = await axios.get('https://en.wikipedia.org/w/api.php', {
-            params: {
-              action: 'query', titles: page.title, prop: 'pageimages', pithumbsize: 400, format: 'json', origin: '*'
-            }, timeout: 5000, headers: { 'User-Agent': 'TravelRouteAI/1.0' }
-          });
-          const imgPages = imgRes?.data?.query?.pages;
-          if (imgPages) {
-            const thumb = Object.values(imgPages).find(p => p && p.thumbnail && p.thumbnail.source);
-            if (thumb) return [thumb.thumbnail.source];
-          }
-        }
-      }
-      } catch (e) { console.error('Wiki search image error:', e.message); }
-    return [];
+    return [`https://picsum.photos/seed/${encodeURIComponent(name)}/400/300`];
   },
 
   _categoryDescription(category) {

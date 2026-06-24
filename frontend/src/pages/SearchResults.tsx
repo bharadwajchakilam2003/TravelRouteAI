@@ -1,9 +1,9 @@
-import { useState, useEffect, lazy, Suspense, useMemo } from 'react';
+import { useState, useEffect, lazy, Suspense, useMemo, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import LoadingSkeleton from '../components/common/LoadingSkeleton';
-import { searchAPI } from '../services/api';
+import { searchAPI, placesAPI, weatherAPI } from '../services/api';
 import { formatDistance, formatDuration } from '../utils/helpers';
 import { downloadTripReport } from '../utils/downloadReport';
 
@@ -71,12 +71,28 @@ export default function SearchResults() {
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('photos');
   const [retryCount, setRetryCount] = useState(0);
+  const [lazyAttractions, setLazyAttractions] = useState<any[]>([]);
+  const [lazyWeather, setLazyWeather] = useState<any[]>([]);
+  const [lazyLoading, setLazyLoading] = useState({ attractions: false, weather: false });
 
   const source = searchParams.get('source') || '';
   const destination = searchParams.get('destination') || '';
   const travelDate = searchParams.get('travelDate') || '';
   const returnDate = searchParams.get('returnDate') || '';
   const [travelers, setTravelers] = useState(() => parseInt(localStorage.getItem('travelers') || searchParams.get('travelers') || '1'));
+
+  const fetchLazyData = useCallback(async (destLat: number, destLng: number) => {
+    setLazyLoading({ attractions: true, weather: true });
+    try {
+      const [attrRes, wRes] = await Promise.all([
+        placesAPI.getAttractions(destLat, destLng, 50000).catch(() => ({ attractions: [] })),
+        weatherAPI.get(destLat, destLng, 1).catch(() => ({ forecast: [] }))
+      ]);
+      setLazyAttractions((attrRes?.attractions || []).map((a: any) => ({ ...a, city: destination })));
+      setLazyWeather([{ city: destination, forecast: wRes?.forecast || [] }]);
+    } catch {}
+    setLazyLoading({ attractions: false, weather: false });
+  }, [destination]);
 
   const doSearch = async (background = false) => {
     if (!source || !destination) return;
@@ -95,6 +111,9 @@ export default function SearchResults() {
           filtered.unshift({ source, destination, timestamp: Date.now() });
           localStorage.setItem('travel_history', JSON.stringify(filtered.slice(0, 20)));
         } catch (e) { console.error('Failed to save search history:', e); }
+        if (data.destination?.lat && data.destination?.lng) {
+          fetchLazyData(data.destination.lat, data.destination.lng);
+        }
       } else {
         setError(data.message || 'No results found');
       }
@@ -114,8 +133,8 @@ export default function SearchResults() {
   }, [retryCount]);
 
   const destinationWeather = useMemo(() =>
-    (results?.weather || []).filter(w => w.city?.toLowerCase() === destination.toLowerCase()),
-    [results?.weather, destination]
+    (lazyWeather.length > 0 ? lazyWeather : results?.weather || []).filter((w: any) => w.city?.toLowerCase() === destination.toLowerCase()),
+    [lazyWeather, results?.weather, destination]
   );
 
   const tabs = useMemo(() => ['photos', 'suggestions', 'travel-options', 'weather', 'costs', 'hotels', 'restaurants', 'map', 'ai-assistant'], []);
@@ -245,7 +264,7 @@ export default function SearchResults() {
             {activeTab === 'photos' && results.destination && (
               <DestinationGallery city={destination} lat={results.destination.lat} lng={results.destination.lng} />
             )}
-            {activeTab === 'suggestions' && <SuggestionsSection destination={results.destination} attractions={results.attractions || []} />}
+            {activeTab === 'suggestions' && <SuggestionsSection destination={results.destination} attractions={lazyAttractions} />}
             {activeTab === 'travel-options' && results.costEstimates && <TravelOptions costEstimates={results.costEstimates} travelers={travelers} />}
             {activeTab === 'weather' && (
               destinationWeather.length > 0 ? (
@@ -292,7 +311,7 @@ export default function SearchResults() {
               <RouteMap
                 source={results.source}
                 destination={results.destination}
-                attractions={results.attractions || []}
+                attractions={lazyAttractions}
                 polyline={results.route?.polyline}
               />
             )}

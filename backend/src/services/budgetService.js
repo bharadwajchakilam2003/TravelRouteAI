@@ -1,5 +1,3 @@
-const axios = require('axios');
-
 const BASE_PETROL_PRICE = 105;
 const BASE_DIESEL_PRICE = 90;
 const AVERAGE_MILEAGE_PETROL = 15;
@@ -15,27 +13,16 @@ function getInflationMultiplier(baseYear = 2024, currentYear = 2026) {
   return Math.pow(1 + ANNUAL_INFLATION_RATE, years);
 }
 
-async function fetchCrudeOilPrice() {
-  try {
-    const res = await axios.get('https://api.oilpriceapi.com/v1/prices/latest', {
-      headers: { Authorization: `Token ${process.env.OILPRICE_API_KEY || ''}` },
-      timeout: 5000
-    });
-    if (res.data?.data?.price) {
-      return res.data.data.price;
-    }
-  } catch (e) { console.error('Crude oil fetch error:', e.message); }
-  return 75;
-}
+const DEFAULT_CRUDE_OIL_PRICE = 75;
 
 function getDaysOnRoad(distanceKm) {
   return Math.max(1, Math.ceil(distanceKm / DAILY_TRAVEL_DISTANCE));
 }
 
 const budgetService = {
-  async calculateBudget(distanceKm, travelers) {
+  calculateBudget(distanceKm, travelers) {
     const days = getDaysOnRoad(distanceKm);
-    const crudeOilPrice = await fetchCrudeOilPrice();
+    const crudeOilPrice = DEFAULT_CRUDE_OIL_PRICE;
     const inflationMultiplier = getInflationMultiplier();
     const fuelPriceAdjustment = 1 + (crudeOilPrice - 75) / 75 * 0.5;
     const effectivePetrolPrice = Math.round(BASE_PETROL_PRICE * inflationMultiplier * fuelPriceAdjustment);
