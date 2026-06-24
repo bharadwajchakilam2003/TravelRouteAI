@@ -1,25 +1,26 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
-import RouteMap from '../components/Map/RouteMap';
-import WeatherSection from '../components/Weather/WeatherSection';
-import CostEstimator from '../components/CostEstimator/CostEstimator';
-import CostComparisonCard from '../components/CostEstimator/CostComparisonCard';
-import BudgetEstimator from '../components/CostEstimator/BudgetEstimator';
-import TravelOptions from '../components/CostEstimator/TravelOptions';
-import DestinationGallery from '../components/Attractions/DestinationGallery';
-import HotelsSection from '../components/Hotels/HotelsSection';
-import RestaurantsSection from '../components/Restaurants/RestaurantsSection';
-import AIChat from '../components/AIChat/AIChat';
-import SuggestionsSection from '../components/Suggestions/SuggestionsSection';
 import LoadingSkeleton from '../components/common/LoadingSkeleton';
-import CostComparisonChart from '../components/Charts/CostComparisonChart';
-import TemperatureTrend from '../components/Charts/TemperatureTrend';
-import BudgetBreakdownChart from '../components/Charts/BudgetBreakdownChart';
 import { searchAPI } from '../services/api';
 import { formatDistance, formatDuration } from '../utils/helpers';
 import { downloadTripReport } from '../utils/downloadReport';
+
+const DestinationGallery = lazy(() => import('../components/Attractions/DestinationGallery'));
+const SuggestionsSection = lazy(() => import('../components/Suggestions/SuggestionsSection'));
+const TravelOptions = lazy(() => import('../components/CostEstimator/TravelOptions'));
+const WeatherSection = lazy(() => import('../components/Weather/WeatherSection'));
+const CostEstimator = lazy(() => import('../components/CostEstimator/CostEstimator'));
+const CostComparisonCard = lazy(() => import('../components/CostEstimator/CostComparisonCard'));
+const BudgetEstimator = lazy(() => import('../components/CostEstimator/BudgetEstimator'));
+const HotelsSection = lazy(() => import('../components/Hotels/HotelsSection'));
+const RestaurantsSection = lazy(() => import('../components/Restaurants/RestaurantsSection'));
+const RouteMap = lazy(() => import('../components/Map/RouteMap'));
+const AIChat = lazy(() => import('../components/AIChat/AIChat'));
+const CostComparisonChart = lazy(() => import('../components/Charts/CostComparisonChart'));
+const TemperatureTrend = lazy(() => import('../components/Charts/TemperatureTrend'));
+const BudgetBreakdownChart = lazy(() => import('../components/Charts/BudgetBreakdownChart'));
 
 interface SearchResultsData {
   route: { distance: number; duration: number; polyline: string; alternativeRoutes: any[] };
@@ -36,6 +37,19 @@ interface SearchResultsData {
   travelers: number;
 }
 
+function TabFallback() {
+  return (
+    <div className="animate-pulse space-y-4 p-8">
+      <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-48" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {[1, 2, 3].map(i => (
+          <div key={i} className="h-48 bg-gray-200 dark:bg-gray-700 rounded-xl" />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function SearchResults() {
   const [searchParams] = useSearchParams();
   const [results, setResults] = useState<SearchResultsData | null>(null);
@@ -44,6 +58,7 @@ export default function SearchResults() {
   const [activeTab, setActiveTab] = useState('photos');
   const [retryCount, setRetryCount] = useState(0);
   const [timedOut, setTimedOut] = useState(false);
+  const [headerReady, setHeaderReady] = useState(false);
 
   const source = searchParams.get('source') || '';
   const destination = searchParams.get('destination') || '';
@@ -57,12 +72,17 @@ export default function SearchResults() {
     setError(null);
     setResults(null);
     setTimedOut(false);
-    const timeoutId = setTimeout(() => setTimedOut(true), 25000);
+    setHeaderReady(false);
+    const timeoutId = setTimeout(() => {
+      setTimedOut(true);
+      setHeaderReady(true);
+    }, 8000);
     try {
       const data = await searchAPI.search({ source, destination, travelDate: travelDate || undefined, returnDate: returnDate || undefined, travelers });
       clearTimeout(timeoutId);
       if (data.success) {
         setResults(data);
+        setHeaderReady(true);
         try {
           const stored = JSON.parse(localStorage.getItem('travel_history') || '[]');
           const filtered = stored.filter((s: any) => !(s.source.toLowerCase() === source.toLowerCase() && s.destination.toLowerCase() === destination.toLowerCase()));
@@ -71,10 +91,12 @@ export default function SearchResults() {
         } catch {}
       } else {
         setError(data.message || 'No results found');
+        setHeaderReady(true);
       }
     } catch (err: any) {
       clearTimeout(timeoutId);
       setError(err.response?.data?.message || 'Failed to fetch search results. Please try again.');
+      setHeaderReady(true);
     } finally {
       clearTimeout(timeoutId);
       setLoading(false);
@@ -83,11 +105,14 @@ export default function SearchResults() {
 
   useEffect(() => { doSearch(); }, [retryCount]);
 
-  const destinationWeather = results?.weather?.filter(
-    w => w.city?.toLowerCase() === destination.toLowerCase()
-  ) || [];
+  const destinationWeather = useMemo(() =>
+    (results?.weather || []).filter(w => w.city?.toLowerCase() === destination.toLowerCase()),
+    [results?.weather, destination]
+  );
 
-  if (loading) return (
+  const tabs = useMemo(() => ['photos', 'suggestions', 'travel-options', 'weather', 'costs', 'hotels', 'restaurants', 'map', 'ai-assistant'], []);
+
+  if (loading && !headerReady) return (
     <>
       {timedOut && (
         <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50">
@@ -155,7 +180,7 @@ export default function SearchResults() {
 
   if (!results) return null;
 
-  const tabs = ['photos', 'suggestions', 'travel-options', 'weather', 'costs', 'hotels', 'restaurants', 'map', 'ai-assistant'];
+  const showSkeleton = loading && headerReady;
 
   return (
     <div className="container-wide py-6">
@@ -203,24 +228,25 @@ export default function SearchResults() {
         </div>
       </motion.div>
 
-        <div className="flex overflow-x-auto gap-2 mb-6 pb-2 scrollbar-hide">
-          {tabs.map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`px-4 py-2 rounded-xl whitespace-nowrap transition-all duration-200 capitalize ${
-                activeTab === tab
-                  ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/25'
-                  : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-              }`}
-            >
-              {tab === 'ai-assistant' ? '🤖 AI Assistant' : tab === 'photos' ? '📸 Photos' : tab === 'suggestions' ? '💡 Suggestions' : tab === 'travel-options' ? '🚗 Travel Options' : tab === 'weather' ? '🌤️ Weather' : tab === 'costs' ? '💰 Costs' : tab === 'hotels' ? '🏨 Hotels' : tab === 'restaurants' ? '🍽️ Restaurants' : tab === 'map' ? '🗺️ Map' : tab}
-            </button>
-          ))}
-        </div>
+      <div className="flex overflow-x-auto gap-2 mb-6 pb-2 scrollbar-hide">
+        {tabs.map(tab => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={`px-4 py-2 rounded-xl whitespace-nowrap transition-all duration-200 capitalize ${
+              activeTab === tab
+                ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/25'
+                : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+            }`}
+          >
+            {tab === 'ai-assistant' ? '🤖 AI Assistant' : tab === 'photos' ? '📸 Photos' : tab === 'suggestions' ? '💡 Suggestions' : tab === 'travel-options' ? '🚗 Travel Options' : tab === 'weather' ? '🌤️ Weather' : tab === 'costs' ? '💰 Costs' : tab === 'hotels' ? '🏨 Hotels' : tab === 'restaurants' ? '🍽️ Restaurants' : tab === 'map' ? '🗺️ Map' : tab}
+          </button>
+        ))}
+      </div>
 
-        <AnimatePresence mode="wait">
-          <motion.div key={activeTab} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}>
+      {showSkeleton ? <TabFallback /> : (
+        <Suspense fallback={<TabFallback />}>
+          <motion.div key={activeTab} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.15 }}>
             {activeTab === 'photos' && results.destination && <DestinationGallery city={destination} lat={results.destination.lat} lng={results.destination.lng} />}
             {activeTab === 'suggestions' && <SuggestionsSection destination={results.destination} attractions={results.attractions || []} source={source} />}
             {activeTab === 'travel-options' && results.costEstimates && <TravelOptions costEstimates={results.costEstimates} travelers={travelers} />}
@@ -253,17 +279,6 @@ export default function SearchResults() {
                   </>
                 )}
                 <CostEstimator costEstimates={results.costEstimates} travelers={travelers} />
-                <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/40 rounded-xl p-4 text-sm text-amber-700 dark:text-amber-300">
-                  <div className="flex items-start gap-3">
-                    <span className="text-lg flex-shrink-0 mt-0.5">⚠️</span>
-                    <div>
-                      <p className="font-semibold mb-1">Cost Estimates Disclaimer</p>
-                      <p className="text-amber-600 dark:text-amber-400 text-xs leading-relaxed">
-                        All costs shown are approximate estimates based on current market trends, fuel prices, and average fare data. Actual prices may vary depending on season, availability, demand, booking time, and specific service providers. Fuel costs assume average mileage and current fuel rates. Bus and train fares are based on standard class rates and may differ for luxury/AC options. Flight prices are indicative and do not include baggage fees or taxes. Please verify with respective service providers before booking.
-                      </p>
-                    </div>
-                  </div>
-                </div>
               </div>
             )}
             {activeTab === 'hotels' && results.citiesOnRoute && <HotelsSection cities={results.citiesOnRoute} />}
@@ -280,7 +295,8 @@ export default function SearchResults() {
               <AIChat context={{ source, destination, distance: results.route?.distance || 0 }} />
             )}
           </motion.div>
-        </AnimatePresence>
+        </Suspense>
+      )}
     </div>
   );
 }
