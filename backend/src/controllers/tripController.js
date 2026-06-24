@@ -4,7 +4,7 @@ exports.saveTrip = async (req, res) => {
   try {
     const tripData = { ...req.body, user: req.user._id };
     const trip = await Trip.create(tripData);
-    await req.user.populate('User');
+    await req.user.populate('savedTrips');
     req.user.savedTrips.push(trip._id);
     await req.user.save();
     res.status(201).json({ success: true, trip });

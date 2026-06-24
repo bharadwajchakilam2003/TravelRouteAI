@@ -150,7 +150,8 @@ const weatherService = {
         }
       }
       return alerts;
-    } catch {
+    } catch (e) {
+      console.error('Weather alerts error:', e.message);
       return [];
     }
   }

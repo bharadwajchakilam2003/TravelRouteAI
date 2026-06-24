@@ -22,7 +22,7 @@ export default function Navbar() {
     try {
       const stored = localStorage.getItem('travel_history');
       if (stored) setSearchHistory(JSON.parse(stored));
-    } catch {}
+    } catch (e) { console.error('Failed to load search history:', e); }
   }, []);
 
   useEffect(() => {

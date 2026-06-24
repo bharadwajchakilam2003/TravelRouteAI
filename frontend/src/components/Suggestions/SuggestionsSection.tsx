@@ -3,7 +3,6 @@ import { motion } from 'framer-motion';
 interface SuggestionProps {
   destination: { name: string; lat: number; lng: number };
   attractions: any[];
-  source: string;
 }
 
 const climateGuide: Record<string, { best: string; avoid: string; reason: string }> = {
@@ -71,164 +70,78 @@ function getClimateZone(city: string): string {
   return cityClimate[key] || 'north';
 }
 
-export default function SuggestionsSection({ destination, attractions, source }: SuggestionProps) {
+export default function SuggestionsSection({ destination, attractions }: SuggestionProps) {
   const destZone = getClimateZone(destination.name);
-  const srcZone = getClimateZone(source);
   const destClimate = climateGuide[destZone] || climateGuide['north'];
-  const srcClimate = climateGuide[srcZone] || climateGuide['north'];
   const destIdeas = tripIdeas[destination.name.toLowerCase().trim()] || [];
-  const srcIdeas = tripIdeas[source.toLowerCase().trim()] || [];
 
-  const destAttractions = (attractions || []).filter(Boolean).filter(a => {
-    const cityMatch = (a as any).city?.toLowerCase() === destination.name.toLowerCase();
-    const nameMatch = (a as any).name?.toLowerCase().includes(destination.name.toLowerCase());
-    return cityMatch || nameMatch;
-  }).slice(0, 6);
-
-  const srcAttractions = (attractions || []).filter(Boolean).filter(a => {
-    const cityMatch = (a as any).city?.toLowerCase() === source.toLowerCase();
-    const nameMatch = (a as any).name?.toLowerCase().includes(source.toLowerCase());
-    return cityMatch || nameMatch;
-  }).slice(0, 6);
+  const destAttractions = (attractions || []).filter(Boolean).filter(a =>
+    (a as any).city?.toLowerCase() === destination.name.toLowerCase()
+  ).slice(0, 6);
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <h2 className="section-title">💡 Travel Suggestions</h2>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-card p-6">
-          <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
-            <span className="text-2xl">📅</span> Best Time to Visit {source}
-          </h3>
-          <div className="space-y-3">
-            <div className="bg-green-50 dark:bg-green-900/20 rounded-xl p-4 border border-green-100 dark:border-green-800/30">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-lg">✅</span>
-                <span className="font-semibold text-green-700 dark:text-green-300 text-sm">Best Season</span>
-              </div>
-              <p className="text-green-600 dark:text-green-400 font-medium">{srcClimate.best}</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{srcClimate.reason}</p>
-            </div>
-            <div className="bg-red-50 dark:bg-red-900/20 rounded-xl p-4 border border-red-100 dark:border-red-800/30">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-lg">⚠️</span>
-                <span className="font-semibold text-red-700 dark:text-red-300 text-sm">Avoid If Possible</span>
-              </div>
-              <p className="text-red-600 dark:text-red-400 font-medium">{srcClimate.avoid}</p>
-            </div>
-          </div>
-        </motion.div>
-
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="glass-card p-6">
-          <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
-            <span className="text-2xl">📅</span> Best Time to Visit {destination.name}
-          </h3>
-          <div className="space-y-3">
-            <div className="bg-green-50 dark:bg-green-900/20 rounded-xl p-4 border border-green-100 dark:border-green-800/30">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-lg">✅</span>
-                <span className="font-semibold text-green-700 dark:text-green-300 text-sm">Best Season</span>
-              </div>
-              <p className="text-green-600 dark:text-green-400 font-medium">{destClimate.best}</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{destClimate.reason}</p>
-            </div>
-            <div className="bg-red-50 dark:bg-red-900/20 rounded-xl p-4 border border-red-100 dark:border-red-800/30">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-lg">⚠️</span>
-                <span className="font-semibold text-red-700 dark:text-red-300 text-sm">Avoid If Possible</span>
-              </div>
-              <p className="text-red-600 dark:text-red-400 font-medium">{destClimate.avoid}</p>
-            </div>
-          </div>
-        </motion.div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {(srcAttractions.length > 0) && (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="glass-card p-6">
-            <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
-              <span className="text-2xl">📍</span> Places to Visit in & around {source}
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {srcAttractions.map((a, i) => (
-                <motion.div key={i} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.05 }}
-                  className="bg-white dark:bg-gray-800/50 rounded-xl p-3 border border-gray-100 dark:border-gray-700/50 card-hover"
-                >
-                  {a.image && <img src={a.image} alt={a.name} className="w-full h-24 object-cover rounded-lg mb-2" loading="lazy" />}
-                  <h4 className="font-semibold text-gray-800 dark:text-white text-sm">{a.name}</h4>
-                  {a.rating && <span className="text-yellow-500 text-xs">⭐ {a.rating}</span>}
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
-        )}
-
-        {(destAttractions.length > 0) && (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="glass-card p-6">
-            <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
-              <span className="text-2xl">📍</span> Places to Visit in & around {destination.name}
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {destAttractions.map((a, i) => (
-                <motion.div key={i} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.05 }}
-                  className="bg-white dark:bg-gray-800/50 rounded-xl p-3 border border-gray-100 dark:border-gray-700/50 card-hover"
-                >
-                  {a.image && <img src={a.image} alt={a.name} className="w-full h-24 object-cover rounded-lg mb-2" loading="lazy" />}
-                  <h4 className="font-semibold text-gray-800 dark:text-white text-sm">{a.name}</h4>
-                  {a.rating && <span className="text-yellow-500 text-xs">⭐ {a.rating}</span>}
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
-        )}
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {srcIdeas.length > 0 && (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="glass-card p-6">
-            <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
-              <span className="text-2xl">🎯</span> Top Things to Do in {source}
-            </h3>
-            <div className="space-y-2">
-              {srcIdeas.map((idea, i) => (
-                <div key={i} className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800/30 rounded-xl">
-                  <span className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">{i + 1}</span>
-                  <span className="text-sm text-gray-700 dark:text-gray-200">{idea}</span>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-        )}
-
-        {destIdeas.length > 0 && (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} className="glass-card p-6">
-            <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
-              <span className="text-2xl">🎯</span> Top Things to Do in {destination.name}
-            </h3>
-            <div className="space-y-2">
-              {destIdeas.map((idea, i) => (
-                <div key={i} className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800/30 rounded-xl">
-                  <span className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">{i + 1}</span>
-                  <span className="text-sm text-gray-700 dark:text-gray-200">{idea}</span>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-        )}
-      </div>
-
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="glass-card p-6">
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-card p-6">
         <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
-          <span className="text-2xl">🚗</span> Route Overview
+          <span className="text-2xl">📅</span> Best Time to Visit {destination.name}
         </h3>
-        <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-300">
-          <span className="bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-3 py-1.5 rounded-lg font-medium">{source}</span>
-          <svg className="w-5 h-5 text-blue-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-          </svg>
-          <span className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 px-3 py-1.5 rounded-lg font-medium">{destination.name}</span>
+        <div className="space-y-3">
+          <div className="bg-green-50 dark:bg-green-900/20 rounded-xl p-4 border border-green-100 dark:border-green-800/30">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-lg">✅</span>
+              <span className="font-semibold text-green-700 dark:text-green-300 text-sm">Best Season</span>
+            </div>
+            <p className="text-green-600 dark:text-green-400 font-medium">{destClimate.best}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{destClimate.reason}</p>
+          </div>
+          <div className="bg-red-50 dark:bg-red-900/20 rounded-xl p-4 border border-red-100 dark:border-red-800/30">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-lg">⚠️</span>
+              <span className="font-semibold text-red-700 dark:text-red-300 text-sm">Avoid If Possible</span>
+            </div>
+            <p className="text-red-600 dark:text-red-400 font-medium">{destClimate.avoid}</p>
+          </div>
         </div>
       </motion.div>
+
+      {(destAttractions.length > 0) && (
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="glass-card p-6">
+          <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
+            <span className="text-2xl">📍</span> Places to Visit in & around {destination.name}
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {destAttractions.map((a, i) => (
+              <motion.div key={i} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.05 }}
+                className="bg-white dark:bg-gray-800/50 rounded-xl p-3 border border-gray-100 dark:border-gray-700/50 card-hover"
+              >
+                {a.image && <img src={a.image} alt={a.name} className="w-full h-24 object-cover rounded-lg mb-2" loading="lazy" />}
+                <h4 className="font-semibold text-gray-800 dark:text-white text-sm">{a.name}</h4>
+                {a.rating && <span className="text-yellow-500 text-xs">⭐ {a.rating}</span>}
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
+      )}
+
+      {destIdeas.length > 0 && (
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="glass-card p-6">
+          <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
+            <span className="text-2xl">🎯</span> Top Things to Do in {destination.name}
+          </h3>
+          <div className="space-y-2">
+            {destIdeas.map((idea, i) => (
+              <div key={i} className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800/30 rounded-xl">
+                <span className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">{i + 1}</span>
+                <span className="text-sm text-gray-700 dark:text-gray-200">{idea}</span>
+              </div>
+            ))}
+          </div>
+        </motion.div>
+      )}
+
+
     </motion.div>
   );
 }

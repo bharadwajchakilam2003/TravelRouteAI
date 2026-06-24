@@ -35,7 +35,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const res = await authAPI.getMe();
       setUser(res.user);
-    } catch {
+    } catch (e) {
+      console.error('Failed to load user:', e);
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       setToken(null);

@@ -134,7 +134,7 @@ const placesService = {
         }
       }
       return results.slice(0, 8);
-    } catch { return []; }
+    } catch (e) { console.error('Famous attractions fetch error:', e.message); return []; }
   },
 
   async _getPlaceImages(name, cityName = '') {
@@ -143,7 +143,7 @@ const placesService = {
       if (data && data.thumbnail && data.thumbnail.source) {
         return [data.thumbnail.source];
       }
-    } catch {}
+      } catch (e) { console.error('Wiki page image error:', e.message); }
     try {
       const searchTerms = cityName ? `${name} ${cityName}` : name;
       const searchRes = await axios.get('https://en.wikipedia.org/w/api.php', {
@@ -166,7 +166,7 @@ const placesService = {
           }
         }
       }
-    } catch {}
+      } catch (e) { console.error('Wiki search image error:', e.message); }
     return [];
   },
 
@@ -235,7 +235,8 @@ const placesService = {
         timeout: 5000
       });
       return data?.address?.city || data?.address?.town || data?.address?.village || data?.address?.state_district || '';
-    } catch {
+    } catch (e) {
+      console.error('Reverse geocode error:', e.message);
       return '';
     }
   },

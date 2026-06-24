@@ -24,7 +24,7 @@ async function fetchCrudeOilPrice() {
     if (res.data?.data?.price) {
       return res.data.data.price;
     }
-  } catch {}
+  } catch (e) { console.error('Crude oil fetch error:', e.message); }
   return 75;
 }
 

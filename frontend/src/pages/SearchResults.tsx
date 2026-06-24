@@ -88,7 +88,7 @@ export default function SearchResults() {
           const filtered = stored.filter((s: any) => !(s.source.toLowerCase() === source.toLowerCase() && s.destination.toLowerCase() === destination.toLowerCase()));
           filtered.unshift({ source, destination, timestamp: Date.now() });
           localStorage.setItem('travel_history', JSON.stringify(filtered.slice(0, 20)));
-        } catch {}
+        } catch (e) { console.error('Failed to save search history:', e); }
       } else {
         setError(data.message || 'No results found');
         setHeaderReady(true);
@@ -252,13 +252,10 @@ export default function SearchResults() {
       {showSkeleton ? <TabFallback /> : (
         <Suspense fallback={<TabFallback />}>
           <motion.div key={activeTab} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.15 }}>
-            {activeTab === 'photos' && (
-              <div className="space-y-8">
-                {results.source && <DestinationGallery city={source} lat={results.source.lat} lng={results.source.lng} />}
-                {results.destination && <DestinationGallery city={destination} lat={results.destination.lat} lng={results.destination.lng} />}
-              </div>
+            {activeTab === 'photos' && results.destination && (
+              <DestinationGallery city={destination} lat={results.destination.lat} lng={results.destination.lng} />
             )}
-            {activeTab === 'suggestions' && <SuggestionsSection destination={results.destination} attractions={results.attractions || []} source={source} />}
+            {activeTab === 'suggestions' && <SuggestionsSection destination={results.destination} attractions={results.attractions || []} />}
             {activeTab === 'travel-options' && results.costEstimates && <TravelOptions costEstimates={results.costEstimates} travelers={travelers} />}
             {activeTab === 'weather' && (
               <>

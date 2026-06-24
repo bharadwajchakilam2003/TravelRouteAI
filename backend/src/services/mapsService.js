@@ -121,9 +121,9 @@ const mapsService = {
       }));
       cache.set(cacheKey, results);
       return results;
-    } catch {
-      return [];
-    }
+      } catch (e) { console.error('Overpass nearby error:', e.message);
+        return [];
+      }
   },
 
   async getPlacePhoto(photoReference, maxWidth = 400) {
@@ -133,7 +133,7 @@ const mapsService = {
       if (data && data.thumbnail && data.thumbnail.source) {
         return data.thumbnail.source;
       }
-    } catch {}
+    } catch (e) { console.error('Place photo error:', e.message); }
     return '';
   },
 
