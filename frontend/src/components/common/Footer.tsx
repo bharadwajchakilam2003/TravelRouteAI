@@ -18,14 +18,17 @@ export default function Footer() {
             <h3 className="text-white font-semibold mb-4">Quick Links</h3>
             <ul className="space-y-2 text-sm">
               <li><Link to="/" className="hover:text-blue-400 transition-colors">Home</Link></li>
+              <li><Link to="/blog" className="hover:text-blue-400 transition-colors">Blog</Link></li>
+              <li><Link to="/culture" className="hover:text-blue-400 transition-colors">BharatCulture</Link></li>
             </ul>
           </div>
           <div>
             <h3 className="text-white font-semibold mb-4">Support</h3>
             <ul className="space-y-2 text-sm">
-              <li><span className="hover:text-blue-400 transition-colors cursor-pointer">About Us</span></li>
-              <li><span className="hover:text-blue-400 transition-colors cursor-pointer">Contact</span></li>
-              <li><span className="hover:text-blue-400 transition-colors cursor-pointer">Privacy Policy</span></li>
+              <li><Link to="/about" className="hover:text-blue-400 transition-colors">About Us</Link></li>
+              <li><Link to="/contact" className="hover:text-blue-400 transition-colors">Contact</Link></li>
+              <li><Link to="/privacy-policy" className="hover:text-blue-400 transition-colors">Privacy Policy</Link></li>
+              <li><Link to="/terms" className="hover:text-blue-400 transition-colors">Terms of Service</Link></li>
             </ul>
           </div>
         </div>
