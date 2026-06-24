@@ -110,6 +110,11 @@ export default function SearchResults() {
     [results?.weather, destination]
   );
 
+  const sourceWeather = useMemo(() =>
+    (results?.weather || []).filter(w => w.city?.toLowerCase() === source.toLowerCase()),
+    [results?.weather, source]
+  );
+
   const tabs = useMemo(() => ['photos', 'suggestions', 'travel-options', 'weather', 'costs', 'hotels', 'restaurants', 'map', 'ai-assistant'], []);
 
   if (loading && !headerReady) return (
@@ -247,15 +252,41 @@ export default function SearchResults() {
       {showSkeleton ? <TabFallback /> : (
         <Suspense fallback={<TabFallback />}>
           <motion.div key={activeTab} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.15 }}>
-            {activeTab === 'photos' && results.destination && <DestinationGallery city={destination} lat={results.destination.lat} lng={results.destination.lng} />}
+            {activeTab === 'photos' && (
+              <div className="space-y-8">
+                {results.source && <DestinationGallery city={source} lat={results.source.lat} lng={results.source.lng} />}
+                {results.destination && <DestinationGallery city={destination} lat={results.destination.lat} lng={results.destination.lng} />}
+              </div>
+            )}
             {activeTab === 'suggestions' && <SuggestionsSection destination={results.destination} attractions={results.attractions || []} source={source} />}
             {activeTab === 'travel-options' && results.costEstimates && <TravelOptions costEstimates={results.costEstimates} travelers={travelers} />}
             {activeTab === 'weather' && (
               <>
-                <WeatherSection weather={destinationWeather} />
-                {destinationWeather.length > 0 && destinationWeather.map((w, i) => w?.forecast && w.forecast.length >= 2 && (
-                  <TemperatureTrend key={i} forecast={w.forecast} city={w.city || destination} />
-                ))}
+                <div className={sourceWeather.length > 0 && destinationWeather.length > 0 ? 'grid grid-cols-1 lg:grid-cols-2 gap-6' : ''}>
+                  {sourceWeather.length > 0 && (
+                    <div>
+                      <WeatherSection weather={sourceWeather} />
+                      {sourceWeather.map((w, i) => w?.forecast && w.forecast.length >= 2 && (
+                        <TemperatureTrend key={i} forecast={w.forecast} city={w.city || source} />
+                      ))}
+                    </div>
+                  )}
+                  {destinationWeather.length > 0 && (
+                    <div>
+                      <WeatherSection weather={destinationWeather} />
+                      {destinationWeather.map((w, i) => w?.forecast && w.forecast.length >= 2 && (
+                        <TemperatureTrend key={i} forecast={w.forecast} city={w.city || destination} />
+                      ))}
+                    </div>
+                  )}
+                </div>
+                {sourceWeather.length === 0 && destinationWeather.length === 0 && (
+                  <div className="glass-card p-12 text-center">
+                    <div className="text-6xl mb-4">🌤️</div>
+                    <h3 className="text-xl font-semibold text-gray-800 dark:text-white mb-2">No weather data available</h3>
+                    <p className="text-gray-400 dark:text-gray-500">Weather forecast could not be loaded for this route.</p>
+                  </div>
+                )}
               </>
             )}
             {activeTab === 'costs' && results.costEstimates && (
