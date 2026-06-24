@@ -68,20 +68,20 @@ exports.search = async (req, res) => {
           ...(c.name.toLowerCase() === destination.toLowerCase() ? weatherService.getCurrentWeather(c.lat, c.lng).catch(() => ({})) : {})
         })).catch(() => ({ city: c.name, forecast: [] })), 6000)
       )),
-      withTimeout(costService.calculateCarCost(route.distance).catch(() => ({ fuelCost: 0, tollCharges: 0, parkingCharges: 0, totalCost: 0, duration: 0 })), 3000),
-      withTimeout(costService.calculateBusCost(route.distance).catch(() => ({ governmentBus: { cost: 0, duration: 0 }, privateBus: { cost: 0, duration: 0 } })), 3000),
-      withTimeout(costService.calculateTrainCost(route.distance, source, destination).catch(() => ({ trains: [] })), 5000)
+      withTimeout(Promise.resolve(costService.calculateCarCost(route.distance)).catch(() => ({ fuelCost: 0, tollCharges: 0, parkingCharges: 0, totalCost: 0, duration: 0 })), 3000),
+      withTimeout(Promise.resolve(costService.calculateBusCost(route.distance)).catch(() => ({ governmentBus: { cost: 0, duration: 0 }, privateBus: { cost: 0, duration: 0 } })), 3000),
+      withTimeout(Promise.resolve(costService.calculateTrainCost(route.distance, source, destination)).catch(() => ({ trains: [] })), 5000)
     ]);
     let flightCost = { flights: [] };
     try {
       const srcCode = await withTimeout(airportService.getAirportCode(source) || (source.length <= 3 ? source.slice(0, 3).toUpperCase() : null) || airportService.getNearestAirport(sourceCoords.lat, sourceCoords.lng), 3000);
       const destCode = await withTimeout(airportService.getAirportCode(destination) || (destination.length <= 3 ? destination.slice(0, 3).toUpperCase() : null) || airportService.getNearestAirport(destCoords.lat, destCoords.lng), 3000);
       if (srcCode && destCode) {
-        flightCost = await withTimeout(costService.calculateFlightCost(srcCode, destCode, travelDate, route.distance).catch(() => ({ flights: [] })), 5000);
+        flightCost = await withTimeout(Promise.resolve(costService.calculateFlightCost(srcCode, destCode, travelDate, route.distance)).catch(() => ({ flights: [] })), 5000);
       }
     } catch { flightCost = { flights: [] }; }
     const costSummary = costService.getSummary(carCost, busCost, trainCost, flightCost);
-    const budget = await withTimeout(budgetService.calculateBudget(route.distance, travelers || 1).catch(() => null), 3000);
+    const budget = await withTimeout(Promise.resolve(budgetService.calculateBudget(route.distance, travelers || 1)).catch(() => null), 3000);
     const allAttractions = (attractionsResults || []).flatMap(r =>
       r?.attractions?.map(a => ({ ...a, city: r.city })) || []
     ).slice(0, 30);
