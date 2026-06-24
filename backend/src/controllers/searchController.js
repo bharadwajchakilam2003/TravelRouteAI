@@ -68,7 +68,7 @@ exports.search = async (req, res) => {
     const budget = budgetService.calculateBudget(d, travelers || 1);
 
     const flightCost = srcCode && destCode
-      ? costService.calculateFlightCost(srcCode, destCode, travelDate, d)
+      ? await costService.calculateFlightCost(srcCode, destCode, travelDate, d).catch(() => ({ flights: [] }))
       : { flights: [] };
 
     const costSummary = costService.getSummary(
