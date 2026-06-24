@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import AutocompleteInput from '../common/AutocompleteInput';
@@ -13,6 +13,15 @@ export default function SearchForm() {
     travelers: 1,
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const warmed = useRef(false);
+
+  useEffect(() => {
+    if (warmed.current) return;
+    if (form.source.length > 0 || form.destination.length > 0) {
+      warmed.current = true;
+      fetch('/api/health', { method: 'GET', cache: 'no-store' }).catch(() => {});
+    }
+  }, [form.source, form.destination]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
