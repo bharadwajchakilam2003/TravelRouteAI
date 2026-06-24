@@ -1,0 +1,15 @@
+{
+  "buildCommand": "cd frontend && npm install && npm run build",
+  "outputDirectory": "frontend/dist",
+  "installCommand": "npm install --prefix frontend && npm install --prefix backend",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/api/$1", "conditions": [{ "type": "header", "key": "accept", "pattern": "application/json" }] },
+    { "source": "/api/(.*)", "destination": "/api/$1" }
+  ],
+  "functions": {
+    "api/index.js": {
+      "includeFiles": "backend/**",
+      "excludeFiles": "backend/node_modules/**"
+    }
+  }
+}
