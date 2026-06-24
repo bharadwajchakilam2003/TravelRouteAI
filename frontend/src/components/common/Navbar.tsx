@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme, themes } from '../../context/ThemeContext';
 import ThemeSwitcher from './ThemeSwitcher';
+import InstallApp from './InstallApp';
 
 interface SearchHistoryItem {
   source: string;
@@ -82,6 +83,8 @@ export default function Navbar() {
             <div className="relative">
               <ThemeSwitcher />
             </div>
+
+            <InstallApp />
 
             <div className="relative" ref={historyRef}>
               <button
@@ -187,6 +190,7 @@ export default function Navbar() {
                   ))}
                 </div>
               </div>
+              <InstallApp isMobile />
               <div className="border-t border-gray-100 dark:border-gray-700 pt-2 mt-2">
                 <div className="px-4 py-2 text-sm font-semibold text-gray-500 dark:text-gray-400">Recent Searches</div>
                 {searchHistory.length === 0 ? (
