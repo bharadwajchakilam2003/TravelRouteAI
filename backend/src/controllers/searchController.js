@@ -97,7 +97,8 @@ exports.search = async (req, res) => {
         }).catch(() => {});
       } else {
         await Search.create({ source, destination, resultsFound: true, responseTime: Date.now() - startTime }).catch(() => {});
-    }
+      }
+    } catch {} // DB unavailable – continue without logging
     try {} catch {} // DB unavailable – continue without logging
     const result = {
       success: true,
